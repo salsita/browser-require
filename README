@@ -1,0 +1,3 @@
+In browser extensions and other environments where scripts are known to be local, we can use a synchronous version of the CommonJS require() function to implement CommonJS module loading. This implementation is compatible with CommonJS modules without requiring any wrapping or other modification.
+
+The current implementation is for use in Chrome extensions only. We are planning to add support for other browser extension platforms.
