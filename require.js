@@ -8,34 +8,32 @@ var require = function(id, scriptPath) {
   var extensionUrlRegExp = "chrome-extension:\/\/[a-w]+\/(.+)\/([^\/]+)(\.js)?$"
   var pathInfo = null;
 
+  if (id[0] == "/") {
+    // Absolute path
+    pathInfo = id.match("\/(.+)\/([^\/]+)$");
+    scriptPath = pathInfo[1];
+    id = pathInfo[2];
+  }
   if (!scriptPath) {
-    if (id[0] == "/") {
-      // Absolute path
-      pathInfo = id.match("\/(.+)\/([^\/]+)$");
-      scriptPath = pathInfo[1];
-      id = pathInfo[2];
-    }
-    else {
-      // Relative path
-      try {
-        throw new Error();
-      } catch(ex) {
-        var skippedFirst = false;
-        // Currently this only supports Chrome extensions. When we add support for
-        // another environment this should be refactored (probably by moving the stack
-        // dump code to a separate module that has implementations for all the different
-        // browser (and potentially other) environments.
-        var lines = ex.stack.split("\n");
-        for (i in lines) {
-          var frame = lines[i].match(extensionUrlRegExp);
-          if (frame) {
-            if (skippedFirst) {
-              scriptPath = frame[1];
-              break;
-            }
-            else {
-              skippedFirst = true;
-            }
+    // Relative path
+    try {
+      throw new Error();
+    } catch(ex) {
+      var skippedFirst = false;
+      // Currently this only supports Chrome extensions. When we add support for
+      // another environment this should be refactored (probably by moving the stack
+      // dump code to a separate module that has implementations for all the different
+      // browser (and potentially other) environments.
+      var lines = ex.stack.split("\n");
+      for (i in lines) {
+        var frame = lines[i].match(extensionUrlRegExp);
+        if (frame) {
+          if (skippedFirst) {
+            scriptPath = frame[1];
+            break;
+          }
+          else {
+            skippedFirst = true;
           }
         }
       }
