@@ -73,6 +73,12 @@ var require = function(id, scriptPath) {
     // So we wrap the code in a function that takes these symbols as arguments.
     var func = new Function("require", "exports", "module", responseText);
     var context = {};
+    // jQuery is not a CommonJS module, include it in the context
+    // if it was loaded already:
+    if (jQuery) {
+      context.jQuery = jQuery;
+      context.$ = jQuery;
+    }
     var exports = require._cache[url] = {};
     var module = { id: id, uri: url };
     // Invoke our function with the appropriate parameters.
