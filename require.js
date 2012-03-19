@@ -18,7 +18,7 @@ var require = function require(id, scriptUrlPath) {
       // or
       // require (file://path/to/require.js:8:11)
       // I'm not sure why two different formats are used. Some study of the printStackTrace
-      // source code might be helpful.  
+      // source code might be helpful.
       var match = frames[i].match("((([^ ]+) \\()|(([^@]+)\\(\\)@))(.*)\/.+\.js:");
       if (foundRequireFrame && match) {
         scriptUrlPath = match[6];
