@@ -6,42 +6,49 @@
 
 // Makes use of printStackTrace() as defined in https://github.com/eriwen/javascript-stacktrace.
 
-var require = function(id, scriptUrl) {
-  if (!scriptUrl) {
+var require = function require(id, scriptUrlPath) {
+  if (!scriptUrlPath) {
     frames = printStackTrace();
     // We are interested in the frame right below the first call to require().
     var foundRequireFrame = false;
     for (var i=0; i<frames.length; i++) {
-      var match = frames[i].match("([^@]+)\\(\\)@(.*)\/.+\.js:");
-      if (foundRequireFrame) {
-        scriptUrl = match[2];
+      // Extract the function name and file path from a frame.
+      // The frame we are interested in should look something like:
+      // require()@file:///path/to/require.js:8:11
+      // or
+      // require (file://path/to/require.js:8:11)
+      // I'm not sure why two different formats are used. Some study of the printStackTrace
+      // source code might be helpful.  
+      var match = frames[i].match("((([^ ]+) \\()|(([^@]+)\\(\\)@))(.*)\/.+\.js:");
+      if (foundRequireFrame && match) {
+        scriptUrlPath = match[6];
         break;
       }
-      if (match && match[1] == "require") {
+      if (match && (match[3] == "require" || match[5] == "require")) {
         foundRequireFrame = true;
       }
     }
-    if (!scriptUrl) {
+    if (!scriptUrlPath) {
       throw new Error("Cannot get the path of the current module");
     }
   }
   if (id[0] == "/") {
     // Separate the path and filename;
-    var pathInfo = id.match("(.+)/([^/]+)$");
+    var pathInfo = id.match("/?(.*)/([^/]+)$");
     var path = pathInfo[1];
     id = pathInfo[2];
 
     // Extract the part of the URL preceding the path, e.g.:
     // file:///path/to/ -> file://
     // http://server/path/to/ -> http://server
-    var urlPrefix = scriptUrl.match("([^:]+://[^/]*)/")[1];
+    var urlPrefix = scriptUrlPath.match("([^:]+://[^/]*)/")[1];
     // Turn the path into a URL
-    scriptUrl = urlPrefix + path;
+    scriptUrlPath = urlPrefix + "/" + path;
   }
 
-  var url = normalize(scriptUrl + "/" + id + ".js");
-  // Recalculate scriptUrl to be the full path based on the normalized URL.
-  scriptUrl = url.match("(.*)/[^/]+\.js")[1];
+  var url = normalize(scriptUrlPath + "/" + id + ".js");
+  // Recalculate scriptUrlPath to be the full path based on the normalized URL.
+  scriptUrlPath = url.match("(.*)/[^/]+\.js")[1];
 
   if (!(url in require._cache)) {
     var responseText = null;
@@ -61,8 +68,8 @@ var require = function(id, scriptUrl) {
     // See http://wiki.commonjs.org/wiki/Modules/1.1#Module_Context for more information.
     // So we wrap the code in a function that takes these symbols as arguments.
     // For compatibility with Node.js, we create a header that defines global variables
-    // that it provides to modules.
-    var header = "var __dirname = '" + scriptUrl.match(".*://(.*)")[1] + "';";
+    // that it provides to modules. Right now that means __dirname but we may want to add others.
+    var header = "var __dirname = '/" + scriptUrlPath.match(".*://[^/]*/(.*)")[1] + "';";
     var func = new Function("require", "exports", "module", header + responseText);
     var context = {};
     // jQuery is not a CommonJS module, include it in the context
@@ -76,7 +83,7 @@ var require = function(id, scriptUrl) {
     // Invoke our function with the appropriate parameters.
     // We use a closure for require since we want to pass in the current script path.
     // This ensures that relative paths in the module will be resolved properly.
-    func.call(context, function(id) { return require(id, scriptUrl); }, exports, module);
+    func.call(context, function(id) { return require(id, scriptUrlPath); }, exports, module);
   }
   return require._cache[url];
 

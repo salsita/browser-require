@@ -24,8 +24,6 @@ var script_data = fs.readFileSync("./require.js", "utf8");
 eval(script_data);
 
 describe("Loading of CommonJS modules", function() {
-  beforeEach(function() {
-  });
   it("should load a CommonJS module using a relative path", function() {
     var module1 = require("../modules/module1");
     expect(module1.module_name).toEqual("module1");
@@ -47,5 +45,22 @@ describe("Loading of CommonJS modules", function() {
     var module2 = require("../one/../two/three/./.././../modules/./module2");
     expect(module2.module_name).toEqual("module2");
     expect(module2.dependent_module.module_name).toEqual("module1");
+  });
+  it("should handle absolute paths to files in the root directory", function() {
+    // We need to change our jQuery.ajax() mock so that it loads the module from the right place.
+    spyOn($, "ajax").andCallFake(function(url, params) {
+      $.ajax.originalValue("file://" + path.join(__dirname, "../modules/module1.js"), params);
+    });
+    var module1 = require("/module1");
+    expect(module1.module_name).toEqual("module1");
+  });
+  it("should handle both formats for the require function stack frame", function() {
+    var frames = printStackTrace();
+    printStackTrace = function() {
+      frames[3] = "require (file://path/to/require.js:8:11)";
+      return frames;
+    };
+    var module1 = require("../modules/module1");
+    expect(module1.module_name).toEqual("module1");
   });
 });
