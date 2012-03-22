@@ -16,10 +16,10 @@ var require = function require(id, scriptUrlPath) {
       // The frame we are interested in should look something like:
       // require()@file:///path/to/require.js:8:11
       // or
+      // require("module")@file:///path/to/require.js:8:11
+      // or
       // require (file://path/to/require.js:8:11)
-      // I'm not sure why two different formats are used. Some study of the printStackTrace
-      // source code might be helpful.
-      var match = frames[i].match("((([^ ]+) \\()|(([^@]+)\\(\\)@))(.*)\/.+\.js:");
+      var match = frames[i].match("((([^ ]+) \\()|(([^@]+)\\([^)]*\\)@))(.*)\/.+\.js:");
       if (foundRequireFrame && match) {
         scriptUrlPath = match[6];
         break;
@@ -53,6 +53,7 @@ var require = function require(id, scriptUrlPath) {
   if (!(url in require._cache)) {
     var responseText = null;
     $.ajax(url, {
+      dataType: "text",
       async: false,
       success: function(data) {
         responseText = data;
