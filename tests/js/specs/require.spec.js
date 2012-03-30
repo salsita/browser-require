@@ -55,12 +55,19 @@ describe("Loading of CommonJS modules", function() {
       return this._open(method, "file://" + path.join(__dirname, "../modules/module1.js"), async);
     }
     var module1 = require("/module1");
+    XMLHttpRequest.prototype.open = XMLHttpRequest.prototype._open;
     expect(module1.module_name).toEqual("module1");
   });
-  it("should handle both formats for the require function stack frame", function() {
+  it("should handle all formats for the require function stack frame", function() {
     var frames = printStackTrace();
     printStackTrace = function() {
       frames[3] = "require (file://path/to/require.js:8:11)";
+      return frames;
+    };
+    var module1 = require("../modules/module1");
+    expect(module1.module_name).toEqual("module1");
+    printStackTrace = function() {
+      frames[3] = "require(\"module\")@file:///path/to/require.js:8:11";
       return frames;
     };
     var module1 = require("../modules/module1");
