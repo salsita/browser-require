@@ -12,13 +12,15 @@ function printStackTrace() {
 var path = require("path");
 var fs = require("fs");
 
-var jQuery = {
-  ajax: function(url, options) {
-    // Quick-and-dirty hack to strip of the file:// scheme.
-    options.success(fs.readFileSync(url.substr(7), "utf8"));
-  }
-};
-var $ = jQuery;
+function XMLHttpRequest() {
+}
+
+XMLHttpRequest.prototype.open = function(method, url, async) {
+  this.responseText = fs.readFileSync(url.substr(7), "utf8");
+}
+
+XMLHttpRequest.prototype.send = function() {
+}
 
 var script_data = fs.readFileSync("./require.js", "utf8");
 eval(script_data);
@@ -47,10 +49,11 @@ describe("Loading of CommonJS modules", function() {
     expect(module2.dependent_module.module_name).toEqual("module1");
   });
   it("should handle absolute paths to files in the root directory", function() {
-    // We need to change our jQuery.ajax() mock so that it loads the module from the right place.
-    spyOn($, "ajax").andCallFake(function(url, params) {
-      $.ajax.originalValue("file://" + path.join(__dirname, "../modules/module1.js"), params);
-    });
+    // We need to change XMLHttpRequest so that it loads the module from the right place.
+    XMLHttpRequest.prototype._open = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async) {
+      return this._open(method, "file://" + path.join(__dirname, "../modules/module1.js"), async);
+    }
     var module1 = require("/module1");
     expect(module1.module_name).toEqual("module1");
   });

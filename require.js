@@ -45,22 +45,22 @@ var require = function require(id, scriptUrlPath) {
     // Turn the path into a URL
     scriptUrlPath = urlPrefix + "/" + path;
   }
-
   var url = normalize(scriptUrlPath + "/" + id + ".js");
   // Recalculate scriptUrlPath to be the full path based on the normalized URL.
   scriptUrlPath = url.match("(.*)/[^/]+\.js")[1];
 
   if (!(url in require._cache)) {
-    var responseText = null;
-    $.ajax(url, {
-      async: false,
-      success: function(data) {
-        responseText = data;
-      },
-      error: function(jqXHR, statusText) {
-        throw new Error("Cannot load module " + id + " (" + url + "): " + statusText);
-      }
-    });
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, false);
+      xhr.send();
+      
+      var responseText = xhr.responseText;
+    }
+    catch(e) {
+      throw new Error("Cannot load module " + id + " (" + url + "): " + e.message);
+    }
+    
     // CommonJS modules expect three symbols to be available:
     // - require is this function.
     // - exports is the context to which any exported symbols should be attached.
