@@ -54,13 +54,13 @@ var require = function require(id, scriptUrlPath) {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, false);
       xhr.send();
-      
+
       var responseText = xhr.responseText;
     }
     catch(e) {
       throw new Error("Cannot load module " + id + " (" + url + "): " + e.message);
     }
-    
+
     // CommonJS modules expect three symbols to be available:
     // - require is this function.
     // - exports is the context to which any exported symbols should be attached.
