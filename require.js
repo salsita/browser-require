@@ -70,7 +70,8 @@ var require = function require(id, scriptUrlPath) {
     // For compatibility with Node.js, we create a header that defines global variables
     // that it provides to modules. Right now that means __dirname but we may want to add others.
     var header = "var __dirname = '/" + scriptUrlPath.match(".*://[^/]*/(.*)")[1] + "';";
-    var func = new Function("require", "exports", "module", header + responseText);
+    var footer = ";return exports;";
+    var func = new Function("require", "exports", "module", header + responseText + footer);
     var context = {};
     // jQuery is not a CommonJS module, include it in the context
     // if it was loaded already:
@@ -79,11 +80,11 @@ var require = function require(id, scriptUrlPath) {
       context.$ = jQuery;
     }
     var exports = require._cache[url] = {};
-    var module = { id: id, uri: url };
+    var module = { id: id, uri: url, exports: {} };
     // Invoke our function with the appropriate parameters.
     // We use a closure for require since we want to pass in the current script path.
     // This ensures that relative paths in the module will be resolved properly.
-    func.call(context, function(id) { return require(id, scriptUrlPath); }, exports, module);
+    require._cache[url] = func.call(context, function(id) { return require(id, scriptUrlPath); }, exports, module);
   }
   return require._cache[url];
 
