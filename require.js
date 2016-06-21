@@ -79,11 +79,12 @@ var require = function require(id, scriptUrlPath) {
       context.$ = jQuery;
     }
     var exports = require._cache[url] = {};
-    var module = { id: id, uri: url };
+    var module = { id: id, uri: url, exports: exports };
     // Invoke our function with the appropriate parameters.
     // We use a closure for require since we want to pass in the current script path.
     // This ensures that relative paths in the module will be resolved properly.
     func.call(context, function(id) { return require(id, scriptUrlPath); }, exports, module);
+    require._cache[url] = module.exports;
   }
   return require._cache[url];
 
